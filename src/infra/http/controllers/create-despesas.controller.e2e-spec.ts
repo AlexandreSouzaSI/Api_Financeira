@@ -5,7 +5,7 @@ import { AppModule } from '../../app.module'
 import request from 'supertest'
 import { PrismaService } from 'src/infra/database/prisma/prisma.service'
 
-describe('Fetch orcamentos (E2E)', () => {
+describe('Create despesa (E2E)', () => {
   let app: INestApplication
   let prisma: PrismaService
   let jwt: JwtService
@@ -23,7 +23,7 @@ describe('Fetch orcamentos (E2E)', () => {
     await app.init()
   })
 
-  test('[GET] /orcamentos', async () => {
+  test('[POST] /despesa', async () => {
     const user = await prisma.user.create({
       data: {
         name: 'Alexandre Teste',
@@ -34,32 +34,22 @@ describe('Fetch orcamentos (E2E)', () => {
 
     const accessToken = jwt.sign({ sub: user.id })
 
-    await prisma.despesas.createMany({
-      data: [
-        {
-          name: 'Conta de Luz',
-          valor: 120.0,
-          userId: user.id,
-        },
-        {
-          name: 'Conta de Agua',
-          valor: 120.0,
-          userId: user.id,
-        },
-      ],
-    })
-
     const response = await request(app.getHttpServer())
-      .get('/despesas')
+      .post('/despesa')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send()
+      .send({
+        name: 'Conta de Luz',
+        valor: 120.0,
+      })
 
-    expect(response.statusCode).toBe(200)
-    expect(response.body).toEqual({
-      despesa: [
-        expect.objectContaining({ name: 'Conta de Luz' }),
-        expect.objectContaining({ name: 'Conta de Agua' }),
-      ],
+    expect(response.statusCode).toBe(201)
+
+    const despesaOnDatabase = await prisma.despesas.findFirst({
+      where: {
+        name: 'Conta de Luz',
+      },
     })
+
+    expect(despesaOnDatabase).toBeTruthy()
   })
 })

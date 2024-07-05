@@ -1,10 +1,10 @@
 import { BadRequestException, Controller, Get, Query } from '@nestjs/common'
-import { FetchRecentOrcamentoUseCase } from 'src/domain/use-cases/orcamento-fetch-recent-use-case'
+import { FetchRecentDespesasUseCase } from 'src/domain/use-cases/despesas-fetch-recent-use-case'
 import { CurrentUser } from 'src/infra/auth/current-user-decorator'
 import { UserPayload } from 'src/infra/auth/jwt.strategy'
 import { ZodValidationPipe } from 'src/infra/http/pipes/zod-validation-pipe'
 import { z } from 'zod'
-import { OrcamentoPresenter } from '../presenters/orcamento-presenter'
+import { DespesasPresenter } from '../presenters/despesas-presenter'
 
 const pageQueryParamSchema = z
   .string()
@@ -17,9 +17,9 @@ const queryValidationPipe = new ZodValidationPipe(pageQueryParamSchema)
 
 type PageQueryParamSchema = z.infer<typeof pageQueryParamSchema>
 
-@Controller('/orcamentos')
-export class FetchOrcamentosController {
-  constructor(private fetchRecentOrcamento: FetchRecentOrcamentoUseCase) {}
+@Controller('/despesas')
+export class FetchDespesasController {
+  constructor(private fetchRecenDespesas: FetchRecentDespesasUseCase) {}
 
   @Get()
   async handle(
@@ -28,7 +28,7 @@ export class FetchOrcamentosController {
   ) {
     const userValidate = user.sub
 
-    const result = await this.fetchRecentOrcamento.execute({
+    const result = await this.fetchRecenDespesas.execute({
       page,
       userId: userValidate,
     })
@@ -37,8 +37,8 @@ export class FetchOrcamentosController {
       throw new BadRequestException()
     }
 
-    const orcamento = result.value.orcamento
+    const despesas = result.value.despesas
 
-    return { orcamento: orcamento.map(OrcamentoPresenter.toHTTP) }
+    return { despesa: despesas.map(DespesasPresenter.toHTTP) }
   }
 }

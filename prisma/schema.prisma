@@ -13,18 +13,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Group {
+  id        String       @id @default(uuid())
+  name      String
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime?    @updatedAt @map("updated_at")
+  userId    String       @map("user_id")
+  users     UserGroups[]
+
+  @@map("group")
+}
+
 model User {
-  id         String      @id @default(uuid())
-  name       String
-  email      String      @unique
-  password   String
-  orcamentos Orcamento[]
-  rendas     Renda[]
+  id       String     @id @default(uuid())
+  name     String
+  email    String     @unique
+  password String
+  despesas Despesas[]
+  rendas   Renda[]
+
+  groups UserGroups[]
 
   @@map("users")
 }
 
-model Orcamento {
+model UserGroups {
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  group     Group     @relation(fields: [groupId], references: [id])
+  groupId   String
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@id([userId, groupId])
+  @@map("user_groups")
+}
+
+model Despesas {
   id             String    @id @default(uuid())
   name           String
   data           DateTime?
@@ -36,7 +60,7 @@ model Orcamento {
 
   user User @relation(fields: [userId], references: [id])
 
-  @@map("orcamentos")
+  @@map("despesas")
 }
 
 model Renda {
@@ -50,5 +74,5 @@ model Renda {
 
   user User @relation(fields: [userId], references: [id])
 
-  @@map("redas")
+  @@map("rendas")
 }
